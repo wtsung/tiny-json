@@ -78,7 +78,6 @@ void json_pushback_array_element(json_node* node, json_node* value);
 void json_popback_array_element(json_node* node);
 void json_insert_array_element(json_node* node, json_node* v, int index);
 
-
 int json_get_object_size(const json_node* n);
 int json_get_object_capacity(const json_node* n);
 const std::string json_get_object_key(const json_node* n, int index);

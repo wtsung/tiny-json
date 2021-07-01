@@ -422,9 +422,8 @@ void json_erase_array_element(json_node* node, int index, int count){
     auto iter_e = node->arr.begin();
     if (count <= 0)
         return;
-    for (int i = 0; i < index; i++){
+    for (int i = 0; i < index; i++)
         iter_b++;
-    }
     iter_e = iter_b;
     for (int i = 0; i < count; i++)
         iter_e++;

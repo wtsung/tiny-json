@@ -130,7 +130,8 @@ static void test_parse_string() {
 #define EXPECT_TRUE(actual) EXPECT_EQ_BASE((actual) != 0, "true", "false", "%s")
 
 static void test_parse_array() {
-    int i, j;
+    int i;
+    int j;
     json_node v;
 
     json_init(&v);
