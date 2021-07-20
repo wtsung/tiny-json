@@ -1,42 +1,42 @@
-#include "JsonNode.h"
+#include "tinyjson.h"
 #include <gtest/gtest.h>
 
 TEST(TestJson, test_parse_null) {
     JsonNode v;
-    v.JsonInit();
-    v.SetBool(false);
-    EXPECT_EQ(JSON_PARSE_OK, v.Parse("null"));
-    EXPECT_EQ(JSON_TYPE_NULL, v.GetType());
-    v.JsonFree();
+    v.json_init();
+    v.set_bool(false);
+    EXPECT_EQ(JSON_PARSE_OK, v.json_parse("null"));
+    EXPECT_EQ(JSON_TYPE_NULL, v.get_type());
+    v.json_free();
 }
 
 TEST(TestJson, test_parse_true) {
     JsonNode v;
-    v.JsonInit();
-    v.SetBool(false);
-    EXPECT_EQ(JSON_PARSE_OK, v.Parse("true"));
-    EXPECT_EQ(JSON_TYPE_TRUE, v.GetType());
-    v.JsonFree();
+    v.json_init();
+    v.set_bool(false);
+    EXPECT_EQ(JSON_PARSE_OK, v.json_parse("true"));
+    EXPECT_EQ(JSON_TYPE_TRUE, v.get_type());
+    v.json_free();
 }
 
 TEST(TestJson, test_parse_false) {
     JsonNode v;
-    v.JsonInit();
-    v.SetBool(false);
-    EXPECT_EQ(JSON_PARSE_OK, v.Parse("false"));
-    EXPECT_EQ(JSON_TYPE_FALSE, v.GetType());
-    v.JsonFree();
+    v.json_init();
+    v.set_bool(false);
+    EXPECT_EQ(JSON_PARSE_OK, v.json_parse("false"));
+    EXPECT_EQ(JSON_TYPE_FALSE, v.get_type());
+    v.json_free();
 }
 
-#define TEST_PARSE_NUMBER(expect_num, json)                \
-    do {                                                   \
-        JsonNode n;                                       \
-        n.JsonInit();                                     \
-        n.SetBool(0);                                \
-        EXPECT_EQ(JSON_PARSE_OK, n.Parse(json));      \
-        EXPECT_EQ(JSON_TYPE_NUMBER, n.GetType());     \
-        EXPECT_DOUBLE_EQ(expect_num, n.GetNumber()); \
-        n.JsonFree();                                     \
+#define TEST_PARSE_NUMBER(expect_num, json)           \
+    do {                                              \
+        JsonNode n;                                   \
+        n.json_init();                                \
+        n.set_bool(0);                                \
+        EXPECT_EQ(JSON_PARSE_OK, n.json_parse(json)); \
+        EXPECT_EQ(JSON_TYPE_NUMBER, n.get_type());    \
+        EXPECT_DOUBLE_EQ(expect_num, n.get_number()); \
+        n.json_free();                                \
     } while (0)
 
 TEST(TestJson, test_parse_number) {
@@ -71,14 +71,14 @@ TEST(TestJson, test_parse_number) {
     TEST_PARSE_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
 }
 
-#define TEST_PARSE_STRING(expect_string, json)         \
-    do {                                               \
+#define TEST_PARSE_STRING(expect_string, json)        \
+    do {                                              \
         JsonNode n;                                   \
-        n.JsonInit();                                 \
-        EXPECT_EQ(JSON_PARSE_OK, n.Parse(json));  \
-        EXPECT_EQ(JSON_TYPE_STRING, n.GetType()); \
-        EXPECT_EQ(expect_string, n.GetString()); \
-        n.JsonFree();                                 \
+        n.json_init();                                \
+        EXPECT_EQ(JSON_PARSE_OK, n.json_parse(json)); \
+        EXPECT_EQ(JSON_TYPE_STRING, n.get_type());    \
+        EXPECT_EQ(expect_string, n.get_string());     \
+        n.json_free();                                \
     } while (0)
 
 TEST(TestJson, test_parse_string) {
@@ -99,53 +99,53 @@ TEST(TestJson, test_parse_string) {
 
 TEST(TestJson, test_parse_array) {
     JsonNode n;
-    n.JsonInit();
-    EXPECT_EQ(JSON_PARSE_OK, n.Parse("[ ]"));
-    EXPECT_EQ(JSON_TYPE_ARRAY, n.GetType());
-    EXPECT_EQ(0, n.GetArraySize());
-    n.JsonFree();
+    n.json_init();
+    EXPECT_EQ(JSON_PARSE_OK, n.json_parse("[ ]"));
+    EXPECT_EQ(JSON_TYPE_ARRAY, n.get_type());
+    EXPECT_EQ(0, n.get_array_size());
+    n.json_free();
 
-    EXPECT_EQ(JSON_PARSE_OK, n.Parse("[ null , false , true , 123 , \"abc\" ]"));
-    EXPECT_EQ(JSON_TYPE_ARRAY, n.GetType());
-    EXPECT_EQ(5, n.GetArraySize());
-    EXPECT_EQ(JSON_TYPE_NULL, n.GetArrayIndex(0)->GetType());
-    EXPECT_EQ(JSON_TYPE_FALSE, n.GetArrayIndex(1)->GetType());
-    EXPECT_EQ(JSON_TYPE_TRUE, n.GetArrayIndex(2)->GetType());
-    EXPECT_EQ(JSON_TYPE_NUMBER, n.GetArrayIndex(3)->GetType());
-    EXPECT_EQ(JSON_TYPE_STRING, n.GetArrayIndex(4)->GetType());
-    EXPECT_DOUBLE_EQ(123.0, n.GetArrayIndex(3)->GetNumber());
-    EXPECT_EQ("abc", n.GetArrayIndex(4)->GetString());
-    n.JsonFree();
+    EXPECT_EQ(JSON_PARSE_OK, n.json_parse("[ null , false , true , 123 , \"abc\" ]"));
+    EXPECT_EQ(JSON_TYPE_ARRAY, n.get_type());
+    EXPECT_EQ(5, n.get_array_size());
+    EXPECT_EQ(JSON_TYPE_NULL, n.get_array_index(0)->get_type());
+    EXPECT_EQ(JSON_TYPE_FALSE, n.get_array_index(1)->get_type());
+    EXPECT_EQ(JSON_TYPE_TRUE, n.get_array_index(2)->get_type());
+    EXPECT_EQ(JSON_TYPE_NUMBER, n.get_array_index(3)->get_type());
+    EXPECT_EQ(JSON_TYPE_STRING, n.get_array_index(4)->get_type());
+    EXPECT_DOUBLE_EQ(123.0, n.get_array_index(3)->get_number());
+    EXPECT_EQ("abc", n.get_array_index(4)->get_string());
+    n.json_free();
 
-    n.JsonInit();
-    EXPECT_EQ(JSON_PARSE_OK, n.Parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
-    EXPECT_EQ(JSON_TYPE_ARRAY, n.GetType());
-    EXPECT_EQ(4, n.GetArraySize());
+    n.json_init();
+    EXPECT_EQ(JSON_PARSE_OK, n.json_parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+    EXPECT_EQ(JSON_TYPE_ARRAY, n.get_type());
+    EXPECT_EQ(4, n.get_array_size());
     for (int i = 0; i < 4; i++) {
-        JsonNode* a = n.GetArrayIndex(i);
-        EXPECT_EQ(JSON_TYPE_ARRAY, a->GetType());
-        EXPECT_EQ(i, a->GetArraySize());
+        JsonNode* a = n.get_array_index(i);
+        EXPECT_EQ(JSON_TYPE_ARRAY, a->get_type());
+        EXPECT_EQ(i, a->get_array_size());
         for (int j = 0; j < i; j++) {
-            JsonNode* e = a->GetArrayIndex(j);
-            EXPECT_EQ(JSON_TYPE_NUMBER, e->GetType());
-            EXPECT_DOUBLE_EQ((double) j, e->GetNumber());
+            JsonNode* e = a->get_array_index(j);
+            EXPECT_EQ(JSON_TYPE_NUMBER, e->get_type());
+            EXPECT_DOUBLE_EQ((double) j, e->get_number());
         }
     }
-    n.JsonFree();
+    n.json_free();
 }
 
 TEST(TestJson, test_parse_object) {
     JsonNode n;
     int i;
 
-    n.JsonInit();
-    EXPECT_EQ(JSON_PARSE_OK, n.Parse(" { } "));
-    EXPECT_EQ(JSON_TYPE_OBJECT, n.GetType());
-    EXPECT_EQ(0, n.GetObjectSize());
-    n.JsonFree();
+    n.json_init();
+    EXPECT_EQ(JSON_PARSE_OK, n.json_parse(" { } "));
+    EXPECT_EQ(JSON_TYPE_OBJECT, n.get_type());
+    EXPECT_EQ(0, n.get_object_size());
+    n.json_free();
 
-    n.JsonInit();
-    EXPECT_EQ(JSON_PARSE_OK, n.Parse(
+    n.json_init();
+    EXPECT_EQ(JSON_PARSE_OK, n.json_parse(
                                      " { "
                                      "\"n\" : null , "
                                      "\"f\" : false , "
@@ -155,52 +155,52 @@ TEST(TestJson, test_parse_object) {
                                      "\"a\" : [ 1, 2, 3 ],"
                                      "\"o\" : { \"1\" : 1, \"2\" : 2, \"3\" : 3 }"
                                      " } "));
-    EXPECT_EQ(JSON_TYPE_OBJECT, n.GetType());
-    EXPECT_EQ(7, n.GetObjectSize());
-    EXPECT_EQ("n", n.GetObjectKey(0));
-    EXPECT_EQ(JSON_TYPE_NULL, n.GetObjectValue(0)->GetType());
-    EXPECT_EQ("f", n.GetObjectKey(1));
-    EXPECT_EQ(JSON_TYPE_FALSE, n.GetObjectValue(1)->GetType());
-    EXPECT_EQ("t", n.GetObjectKey(2));
-    EXPECT_EQ(JSON_TYPE_TRUE, n.GetObjectValue(2)->GetType());
-    EXPECT_EQ("i", n.GetObjectKey(3));
-    EXPECT_EQ(JSON_TYPE_NUMBER, n.GetObjectValue(3)->GetType());
-    EXPECT_DOUBLE_EQ(123.0, n.GetObjectValue(3)->GetNumber());
-    EXPECT_EQ("s", n.GetObjectKey(4));
-    EXPECT_EQ(JSON_TYPE_STRING, n.GetObjectValue(4)->GetType());
-    EXPECT_EQ("abc", n.GetObjectValue(4)->GetString());
-    EXPECT_EQ("a", n.GetObjectKey(5));
-    EXPECT_EQ(JSON_TYPE_ARRAY, n.GetObjectValue(5)->GetType());
-    EXPECT_EQ(3, n.GetObjectValue(5)->GetArraySize());
+    EXPECT_EQ(JSON_TYPE_OBJECT, n.get_type());
+    EXPECT_EQ(7, n.get_object_size());
+    EXPECT_EQ("n", n.get_object_key(0));
+    EXPECT_EQ(JSON_TYPE_NULL, n.get_object_value(0)->get_type());
+    EXPECT_EQ("f", n.get_object_key(1));
+    EXPECT_EQ(JSON_TYPE_FALSE, n.get_object_value(1)->get_type());
+    EXPECT_EQ("t", n.get_object_key(2));
+    EXPECT_EQ(JSON_TYPE_TRUE, n.get_object_value(2)->get_type());
+    EXPECT_EQ("i", n.get_object_key(3));
+    EXPECT_EQ(JSON_TYPE_NUMBER, n.get_object_value(3)->get_type());
+    EXPECT_DOUBLE_EQ(123.0, n.get_object_value(3)->get_number());
+    EXPECT_EQ("s", n.get_object_key(4));
+    EXPECT_EQ(JSON_TYPE_STRING, n.get_object_value(4)->get_type());
+    EXPECT_EQ("abc", n.get_object_value(4)->get_string());
+    EXPECT_EQ("a", n.get_object_key(5));
+    EXPECT_EQ(JSON_TYPE_ARRAY, n.get_object_value(5)->get_type());
+    EXPECT_EQ(3, n.get_object_value(5)->get_array_size());
     for (i = 0; i < 3; i++) {
-        JsonNode* e = n.GetObjectValue(5)->GetArrayIndex(i);
-        EXPECT_EQ(JSON_TYPE_NUMBER, e->GetType());
-        EXPECT_DOUBLE_EQ(i + 1.0, e->GetNumber());
+        JsonNode* e = n.get_object_value(5)->get_array_index(i);
+        EXPECT_EQ(JSON_TYPE_NUMBER, e->get_type());
+        EXPECT_DOUBLE_EQ(i + 1.0, e->get_number());
     }
-    EXPECT_EQ("o", n.GetObjectKey(6));
+    EXPECT_EQ("o", n.get_object_key(6));
     {
-        JsonNode* o = n.GetObjectValue(6);
-        EXPECT_EQ(JSON_TYPE_OBJECT, o->GetType());
+        JsonNode* o = n.get_object_value(6);
+        EXPECT_EQ(JSON_TYPE_OBJECT, o->get_type());
         for (i = 0; i < 3; i++) {
-            JsonNode* ov = o->GetObjectValue(i);
-            EXPECT_TRUE('1' + i == o->GetObjectKey(i)[0]);
-            EXPECT_EQ(1, o->GetObjectKeyLength(i));
-            EXPECT_EQ(JSON_TYPE_NUMBER, ov->GetType());
-            EXPECT_DOUBLE_EQ(i + 1.0, ov->GetNumber());
+            JsonNode* ov = o->get_object_value(i);
+            EXPECT_TRUE('1' + i == o->get_object_key(i)[0]);
+            EXPECT_EQ(1, o->get_object_key_length(i));
+            EXPECT_EQ(JSON_TYPE_NUMBER, ov->get_type());
+            EXPECT_DOUBLE_EQ(i + 1.0, ov->get_number());
         }
     }
-    n.JsonFree();
+    n.json_free();
 }
 
 
-#define TEST_PARSE_ERROR(error, json)                \
-    do {                                             \
-        JsonNode n;                                 \
-        n.JsonInit();                               \
-        n.SetBool(0);                          \
-        EXPECT_EQ(error, n.Parse(json));        \
-        EXPECT_EQ(JSON_TYPE_NULL, n.GetType()); \
-        n.JsonFree();                               \
+#define TEST_PARSE_ERROR(error, json)            \
+    do {                                         \
+        JsonNode n;                              \
+        n.json_init();                           \
+        n.set_bool(0);                           \
+        EXPECT_EQ(error, n.json_parse(json));    \
+        EXPECT_EQ(JSON_TYPE_NULL, n.get_type()); \
+        n.json_free();                           \
     } while (0)
 
 TEST(TestJson, test_parse_error) {
@@ -303,14 +303,14 @@ TEST(TestJson, test_parse_error) {
 
 #define TEST_STRINGIFY(json)                          \
     do {                                              \
-        JsonNode n;                                  \
+        JsonNode n;                                   \
         std::string json2;                            \
         int length;                                   \
-        n.JsonInit();                                \
-        EXPECT_EQ(JSON_PARSE_OK, n.Parse(json)); \
-        json2 = n.JsonStringify();                   \
+        n.json_init();                                \
+        EXPECT_EQ(JSON_PARSE_OK, n.json_parse(json)); \
+        json2 = n.json_stringify();                   \
         EXPECT_EQ(json, json2);                       \
-        n.JsonFree();                                \
+        n.json_free();                                \
     } while (0)
 
 TEST(TestJson, test_stringify) {
@@ -358,14 +358,14 @@ TEST(TestJson, test_stringify) {
 
 #define TEST_EQUAL(json1, json2, equality)              \
     do {                                                \
-        JsonNode n1, n2;                               \
-        n1.JsonInit();                                 \
-        n2.JsonInit();                                 \
-        EXPECT_EQ(JSON_PARSE_OK, n1.Parse(json1)); \
-        EXPECT_EQ(JSON_PARSE_OK, n2.Parse(json2)); \
-        EXPECT_EQ(equality, n1.IsEqual(&n2));     \
-        n1.JsonFree();                                 \
-        n2.JsonFree();                                 \
+        JsonNode n1, n2;                                \
+        n1.json_init();                                 \
+        n2.json_init();                                 \
+        EXPECT_EQ(JSON_PARSE_OK, n1.json_parse(json1)); \
+        EXPECT_EQ(JSON_PARSE_OK, n2.json_parse(json2)); \
+        EXPECT_EQ(equality, n1.json_is_equal(&n2));     \
+        n1.json_free();                                 \
+        n2.json_free();                                 \
     } while (0)
 
 TEST(TestJson, test_equal) {
@@ -396,76 +396,76 @@ TEST(TestJson, test_equal) {
 
 TEST(TestJson, test_copy) {
     JsonNode n1, n2;
-    n1.JsonInit();
-    n1.Parse("{\"t\":true,\"f\":false,\"n\":null,\"d\":1.5,\"a\":[1,2,3]}");
-    n2.JsonInit();
-    n2.Copy(&n1);
-    EXPECT_TRUE(n2.IsEqual(&n1));
-    n1.JsonFree();
-    n2.JsonFree();
+    n1.json_init();
+    n1.json_parse("{\"t\":true,\"f\":false,\"n\":null,\"d\":1.5,\"a\":[1,2,3]}");
+    n2.json_init();
+    n2.json_copy(&n1);
+    EXPECT_TRUE(n2.json_is_equal(&n1));
+    n1.json_free();
+    n2.json_free();
 }
 
 TEST(TestJson, test_move) {
     JsonNode n1, n2, n3;
-    n1.JsonInit();
-    n1.Parse("{\"t\":true,\"f\":false,\"n\":null,\"d\":1.5,\"a\":[1,2,3]}");
-    n2.JsonInit();
-    n2.Copy(&n1);
-    n3.JsonInit();
-    n3.Move(&n2);
-    EXPECT_EQ(JSON_TYPE_NULL, n2.GetType());
-    EXPECT_TRUE(n3.IsEqual(&n1));
-    n1.JsonFree();
-    n2.JsonFree();
-    n3.JsonFree();
+    n1.json_init();
+    n1.json_parse("{\"t\":true,\"f\":false,\"n\":null,\"d\":1.5,\"a\":[1,2,3]}");
+    n2.json_init();
+    n2.json_copy(&n1);
+    n3.json_init();
+    n3.json_move(&n2);
+    EXPECT_EQ(JSON_TYPE_NULL, n2.get_type());
+    EXPECT_TRUE(n3.json_is_equal(&n1));
+    n1.json_free();
+    n2.json_free();
+    n3.json_free();
 }
 
 TEST(TestJson, test_swap) {
     JsonNode n1, n2;
-    n1.JsonInit();
-    n2.JsonInit();
-    n1.SetString("Hello");
-    n2.SetString("World!");
-    n1.Swap(&n2);
-    EXPECT_EQ("World!", n1.GetString());
-    EXPECT_EQ("Hello", n2.GetString());
-    n1.JsonFree();
-    n2.JsonFree();
+    n1.json_init();
+    n2.json_init();
+    n1.set_string("Hello");
+    n2.set_string("World!");
+    n1.json_swap(&n2);
+    EXPECT_EQ("World!", n1.get_string());
+    EXPECT_EQ("Hello", n2.get_string());
+    n1.json_free();
+    n2.json_free();
 }
 
 TEST(TestJson, test_access) {
     JsonNode n;
 
     /* test_access_null */
-    n.JsonInit();
-    n.SetString("a");
-    n.JsonFree();
-    EXPECT_EQ(JSON_TYPE_NULL, n.GetType());
-    n.JsonFree();
+    n.json_init();
+    n.set_string("a");
+    n.json_free();
+    EXPECT_EQ(JSON_TYPE_NULL, n.get_type());
+    n.json_free();
 
     /* test_access_boolean */
-    n.JsonInit();
-    n.SetString("a");
-    n.SetBool(1);
-    EXPECT_TRUE(n.GetBool());
-    n.SetBool(0);
-    EXPECT_FALSE(n.GetBool());
-    n.JsonFree();
+    n.json_init();
+    n.set_string("a");
+    n.set_bool(1);
+    EXPECT_TRUE(n.get_bool());
+    n.set_bool(0);
+    EXPECT_FALSE(n.get_bool());
+    n.json_free();
 
     /* test_access_number */
-    n.JsonInit();
-    n.SetString("a");
-    n.SetNumber(1234.5);
-    EXPECT_DOUBLE_EQ(1234.5, n.GetNumber());
-    n.JsonFree();
+    n.json_init();
+    n.set_string("a");
+    n.set_number(1234.5);
+    EXPECT_DOUBLE_EQ(1234.5, n.get_number());
+    n.json_free();
 
     /* test_access_string */
-    n.JsonInit();
-    n.SetString("");
-    EXPECT_EQ("", n.GetString());
-    n.SetString("Hello");
-    EXPECT_EQ("Hello", n.GetString());
-    n.JsonFree();
+    n.json_init();
+    n.set_string("");
+    EXPECT_EQ("", n.get_string());
+    n.set_string("Hello");
+    EXPECT_EQ("Hello", n.get_string());
+    n.json_free();
 
     /* test_access_array */
 
@@ -473,121 +473,121 @@ TEST(TestJson, test_access) {
     auto* e = new JsonNode();
     JsonNode* v;
     int i, j;
-    a->JsonInit();
-    a->SetArray();
+    a->json_init();
+    a->set_array();
     for (i = 0; i < 10; i++) {
         v = new JsonNode();
-        v->JsonInit();
-        v->SetNumber(i);
-        a->PushbackArrayElement(v);
+        v->json_init();
+        v->set_number(i);
+        a->pushback_array_element(v);
     }
 
-    EXPECT_EQ(10, a->GetArraySize());
+    EXPECT_EQ(10, a->get_array_size());
     for (i = 0; i < 10; i++)
-        EXPECT_DOUBLE_EQ((double) i, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i, a->get_array_index(i)->get_number());
 
-    a->PopbackArrayElement();
-    EXPECT_EQ(9, a->GetArraySize());
+    a->popback_array_element();
+    EXPECT_EQ(9, a->get_array_size());
     for (i = 0; i < 9; i++)
-        EXPECT_DOUBLE_EQ((double) i, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i, a->get_array_index(i)->get_number());
 
-    a->EraseArrayElement(4, 0);
-    EXPECT_EQ(9, a->GetArraySize());
+    a->erase_array_element(4, 0);
+    EXPECT_EQ(9, a->get_array_size());
     for (i = 0; i < 9; i++)
-        EXPECT_DOUBLE_EQ((double) i, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i, a->get_array_index(i)->get_number());
 
-    a->EraseArrayElement(8, 1);
-    EXPECT_EQ(8, a->GetArraySize());
+    a->erase_array_element(8, 1);
+    EXPECT_EQ(8, a->get_array_size());
     for (i = 0; i < 8; i++)
-        EXPECT_DOUBLE_EQ((double) i, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i, a->get_array_index(i)->get_number());
 
-    a->EraseArrayElement(0, 2);
-    EXPECT_EQ(6, a->GetArraySize());
+    a->erase_array_element(0, 2);
+    EXPECT_EQ(6, a->get_array_size());
     for (i = 0; i < 6; i++)
-        EXPECT_DOUBLE_EQ((double) i + 2, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i + 2, a->get_array_index(i)->get_number());
 
     for (i = 0; i < 2; i++) {
         v = new JsonNode();
-        v->JsonInit();
-        v->SetNumber(i);
-        a->InsertArrayElement(v, i);
+        v->json_init();
+        v->set_number(i);
+        a->insert_array_element(v, i);
     }
 
-    EXPECT_EQ(8, a->GetArraySize());
+    EXPECT_EQ(8, a->get_array_size());
     for (i = 0; i < 8; i++)
-        EXPECT_DOUBLE_EQ((double) i, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i, a->get_array_index(i)->get_number());
 
-    EXPECT_EQ(8, a->GetArraySize());
+    EXPECT_EQ(8, a->get_array_size());
     for (i = 0; i < 8; i++)
-        EXPECT_DOUBLE_EQ((double) i, a->GetArrayIndex(i)->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i, a->get_array_index(i)->get_number());
 
     v = new JsonNode();
-    v->JsonInit();
-    e->SetString("Hello");
-    a->PushbackArrayElement(v); /* Test if element is freed */
+    v->json_init();
+    e->set_string("Hello");
+    a->pushback_array_element(v); /* Test if element is freed */
 
-    a->ClearArray();
-    EXPECT_EQ(0, a->GetArraySize());
+    a->clear_array();
+    EXPECT_EQ(0, a->get_array_size());
 
-    a->JsonFree();
+    a->json_free();
 
     /* test_access_object */
     auto* o = new JsonNode();
     JsonNode* pn;
     int index;
 
-    o->JsonInit();
-    o->SetObject();
-    EXPECT_EQ(0, o->GetObjectSize());
+    o->json_init();
+    o->set_object();
+    EXPECT_EQ(0, o->get_object_size());
     for (i = 0; i < 10; i++) {
         char key[2] = "a";
         key[0] += i;
         v = new JsonNode();
-        v->JsonInit();
-        v->SetNumber(i);
-        o->SetObjectValue(key, v);
+        v->json_init();
+        v->set_number(i);
+        o->set_object_value(key, v);
     }
-    EXPECT_EQ(10, o->GetObjectSize());
+    EXPECT_EQ(10, o->get_object_size());
     for (i = 0; i < 10; i++) {
         char key[] = "a";
         key[0] += i;
-        index = o->FindObjectIndex(key);
+        index = o->find_object_index(key);
         EXPECT_TRUE(index != JSON_PARSE_NOT_EXIST_KEY);
-        pn = o->GetObjectValue(index);
-        EXPECT_DOUBLE_EQ((double) i, pn->GetNumber());
+        pn = o->get_object_value(index);
+        EXPECT_DOUBLE_EQ((double) i, pn->get_number());
     }
 
-    index = o->FindObjectIndex("j");
+    index = o->find_object_index("j");
     EXPECT_TRUE(index != JSON_PARSE_NOT_EXIST_KEY);
-    o->RemoveObjectValue(index);
-    index = o->FindObjectIndex("j");
+    o->remove_object_value(index);
+    index = o->find_object_index("j");
     EXPECT_TRUE(index == JSON_PARSE_NOT_EXIST_KEY);
-    EXPECT_EQ(9, o->GetObjectSize());
+    EXPECT_EQ(9, o->get_object_size());
 
-    index = o->FindObjectIndex("a");
+    index = o->find_object_index("a");
     EXPECT_TRUE(index != JSON_PARSE_NOT_EXIST_KEY);
-    o->RemoveObjectValue(index);
-    index = o->FindObjectIndex("a");
+    o->remove_object_value(index);
+    index = o->find_object_index("a");
     EXPECT_TRUE(index == JSON_PARSE_NOT_EXIST_KEY);
-    EXPECT_EQ(8, o->GetObjectSize());
+    EXPECT_EQ(8, o->get_object_size());
 
     for (i = 0; i < 8; i++) {
         char key[] = "a";
         key[0] += i + 1;
-        EXPECT_DOUBLE_EQ((double) i + 1, o->GetObjectValue(o->FindObjectIndex(key))->GetNumber());
+        EXPECT_DOUBLE_EQ((double) i + 1, o->get_object_value(o->find_object_index(key))->get_number());
     }
 
-    v->SetString("Hello");
-    o->SetObjectValue("World", v); /* Test if element is freed */
+    v->set_string("Hello");
+    o->set_object_value("World", v); /* Test if element is freed */
 
-    pn = o->FindObjectValue("World");
+    pn = o->find_object_value("World");
     EXPECT_TRUE(pn != nullptr);
-    EXPECT_EQ("Hello", pn->GetString());
+    EXPECT_EQ("Hello", pn->get_string());
 
-    o->ClearObject();
-    EXPECT_EQ(0, o->GetObjectSize());
+    o->clear_object();
+    EXPECT_EQ(0, o->get_object_size());
 
-    o->JsonFree();
+    o->json_free();
 }
 
 

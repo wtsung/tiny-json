@@ -2,40 +2,40 @@
 #include <cerrno>
 
 JsonNode::JsonNode(const JsonNode& n) {
-    this->JsonFree();
-    this->Copy(&n);
+    this->json_free();
+    this->json_copy(&n);
 }
 
 JsonNode& JsonNode::operator=(const JsonNode& n) {
-    this->JsonFree();
-    this->Copy(&n);
+    this->json_free();
+    this->json_copy(&n);
     return *this;
 }
 
 JsonNode::~JsonNode() {
-    this->JsonFree();
+    this->json_free();
 }
 
-static void ParseWhitespace(JsonContext* c) {
+static void parse_whitespace(JsonContext* c) {
     const char* str = c->json;
     while (*str == ' ' || *str == '\r' || *str == '\n' || *str == '\t')
         str++;
     c->json = str;
 }
 
-static int ParseNull(JsonNode* node, JsonContext* c) {
+static int parse_null(JsonNode* node, JsonContext* c) {
     assert(*c->json == 'n');
     if (c->json[1] != 'u' || c->json[2] != 'l' || c->json[3] != 'l')
         return JSON_PARSE_INVALID_VALUE;
-    node->SetNull();
+    node->set_null();
     c->json += 4;
     return JSON_PARSE_OK;
 }
 
-static int ParseTrue(JsonNode* node, JsonContext* c) {
+static int parse_true(JsonNode* node, JsonContext* c) {
     assert(*c->json == 't');
     if (c->json[1] == 'r' && c->json[2] == 'u' && c->json[3] == 'e') {
-        node->SetBool(true);
+        node->set_bool(true);
         c->json += 4;
         return JSON_PARSE_OK;
     } else {
@@ -43,10 +43,10 @@ static int ParseTrue(JsonNode* node, JsonContext* c) {
     }
 }
 
-static int ParseFalse(JsonNode* node, JsonContext* c) {
+static int parse_false(JsonNode* node, JsonContext* c) {
     assert(*c->json == 'f');
     if (c->json[1] == 'a' && c->json[2] == 'l' && c->json[3] == 's' && c->json[4] == 'e') {
-        node->SetBool(false);
+        node->set_bool(false);
         c->json += 5;
         return JSON_PARSE_OK;
     } else {
@@ -56,7 +56,7 @@ static int ParseFalse(JsonNode* node, JsonContext* c) {
 
 #define ISDIGIT1TO9(ch) (((ch) >= '1') && ((ch) <= '9'))
 #define ISDIGIT(ch) (((ch) >= '0') && ((ch) <= '9'))
-static int ParseNumber(JsonNode* node, JsonContext* c) {
+static int parse_number(JsonNode* node, JsonContext* c) {
     const char* p = c->json;
     if (*p == '-') p++;//判断负号
     if (*p == '0') {   //判断0
@@ -90,13 +90,13 @@ static int ParseNumber(JsonNode* node, JsonContext* c) {
     //数字过大
     if (errno == ERANGE && (num_str == HUGE_VAL || num_str == -HUGE_VAL))
         return JSON_PARSE_NUMBER_TOO_BIG;
-    node->SetNumber(num_str);
+    node->set_number(num_str);
     c->json = p;
     return JSON_PARSE_OK;
 }
 
 //获取/u后的四位十六进制数
-static const char* ParseHex4(const char* p, unsigned* u) {
+static const char* parse_hex4(const char* p, unsigned* u) {
     *u = 0;
     for (int i = 0; i < 4; i++) {
         char ch = *p++;
@@ -114,7 +114,7 @@ static const char* ParseHex4(const char* p, unsigned* u) {
 }
 
 //utf-8解析压栈
-static void EncodeUtf8(std::string& str, unsigned u) {
+static void encode_utf8(std::string& str, unsigned u) {
     if (u <= 0x7F)//此范围码点编码对应一个字节
         str.push_back(u & 0xFF);
     //或是加上前缀
@@ -134,7 +134,7 @@ static void EncodeUtf8(std::string& str, unsigned u) {
     }
 }
 
-static int ParseStringRaw(JsonContext* c, std::string& str) {
+static int parse_string_raw(JsonContext* c, std::string& str) {
     assert(*c->json == '\"');
     unsigned u, u2;
     c->json++;
@@ -175,20 +175,20 @@ static int ParseStringRaw(JsonContext* c, std::string& str) {
                         str.push_back('/');
                         break;
                     case 'u':
-                        if (!(p = ParseHex4(p, &u)))
+                        if (!(p = parse_hex4(p, &u)))
                             return JSON_PARSE_INVALID_UNICODE_HEX;
                         if (u >= 0xD800 && u <= 0xDBFF) { /* surrogate pair 代理对*///D800-DBFF此处为高代理对
                             if (*p++ != '\\')
                                 return JSON_PARSE_INVALID_UNICODE_SURROGATE;
                             if (*p++ != 'u')
                                 return JSON_PARSE_INVALID_UNICODE_SURROGATE;
-                            if (!(p = ParseHex4(p, &u2)))
+                            if (!(p = parse_hex4(p, &u2)))
                                 return JSON_PARSE_INVALID_UNICODE_SURROGATE;
                             if (u2 < 0xDC00 || u2 > 0xDFFF)//DC00-DFFF为低代理对
                                 return JSON_PARSE_INVALID_UNICODE_SURROGATE;
                             u = (((u - 0xD800) << 10) | (u2 - 0xDC00)) + 0x10000;
                         }
-                        EncodeUtf8(str, u);
+                        encode_utf8(str, u);
                         break;
                     default:
                         str.clear();
@@ -205,27 +205,27 @@ static int ParseStringRaw(JsonContext* c, std::string& str) {
     }
 }
 
-static int ParseString(JsonNode* node, JsonContext* c) {
+static int parse_string(JsonNode* node, JsonContext* c) {
     int ret;
     std::string s;
-    if ((ret = ParseStringRaw(c, s)) == JSON_PARSE_OK) {
-        node->SetString(s);
+    if ((ret = parse_string_raw(c, s)) == JSON_PARSE_OK) {
+        node->set_string(s);
     }
     return ret;
 }
 
-void JsonNode::JsonFree() {
+void JsonNode::json_free() {
     switch (this->type) {
         case JSON_TYPE_ARRAY:
             for (auto node : this->array) {
-                node->JsonFree();
+                node->json_free();
                 free(node);
             }
             this->array.clear();
             break;
         case JSON_TYPE_OBJECT:
             for (auto node : this->object) {
-                node.second->JsonFree();
+                node.second->json_free();
                 free(node.second);
             }
             this->object.clear();
@@ -236,62 +236,62 @@ void JsonNode::JsonFree() {
     this->type = JSON_TYPE_NULL;
 }
 
-void JsonNode::JsonInit() {
+void JsonNode::json_init() {
     this->type = JSON_TYPE_NULL;
 }
 
-static int ParseValue(JsonNode* node, JsonContext* c);
+static int parse_value(JsonNode* node, JsonContext* c);
 
-static int ParseArray(JsonNode* node, JsonContext* c) {
+static int parse_array(JsonNode* node, JsonContext* c) {
     assert(*c->json == '[');
-    node->SetArray();
+    node->set_array();
     c->json++;
-    ParseWhitespace(c);
+    parse_whitespace(c);
     if (*c->json == ']') {
-        node->SetArray({});
+        node->set_array({});
         c->json++;
         return JSON_PARSE_OK;
     }
     int ret;
     while (true) {
         auto n = new JsonNode();
-        n->JsonInit();
-        if ((ret = ParseValue(n, c)) != JSON_PARSE_OK) {
+        n->json_init();
+        if ((ret = parse_value(n, c)) != JSON_PARSE_OK) {
             break;
         }
-        node->PushbackArrayElement(n);
-        ParseWhitespace(c);
+        node->pushback_array_element(n);
+        parse_whitespace(c);
         if (*c->json == ',') {
             c->json++;
-            ParseWhitespace(c);
+            parse_whitespace(c);
         } else if (*c->json == ']') {
-            node->SetArray();
+            node->set_array();
             c->json++;
             return JSON_PARSE_OK;
         } else {
-            for (int i = 0; i < node->GetArraySize(); i++)
-                node->GetArrayIndex(i)->JsonFree();
-            node->JsonFree();
+            for (int i = 0; i < node->get_array_size(); i++)
+                node->get_array_index(i)->json_free();
+            node->json_free();
             return JSON_PARSE_MISS_COMMA_OR_SQUARE_BRACKET;
         }
     }
-    for (int i = 0; i < node->GetArraySize(); i++)
-        node->GetArrayIndex(i)->JsonFree();
-    node->JsonFree();
+    for (int i = 0; i < node->get_array_size(); i++)
+        node->get_array_index(i)->json_free();
+    node->json_free();
     return ret;
 }
 
-static int ParseObject(JsonNode* node, JsonContext* c) {
+static int parse_object(JsonNode* node, JsonContext* c) {
     int ret;
     assert(*c->json == '{');
-    node->SetObject();
+    node->set_object();
     c->json++;
     std::string str;
     JsonNode* n;
-    ParseWhitespace(c);
+    parse_whitespace(c);
     if (*c->json == '}') {
         c->json++;
-        node->SetObject({});
+        node->set_object({});
         return JSON_PARSE_OK;
     }
     while (true) {
@@ -301,141 +301,140 @@ static int ParseObject(JsonNode* node, JsonContext* c) {
             ret = JSON_PARSE_NOT_EXIST_KEY;
             break;
         }
-        if ((ret = ParseStringRaw(c, str)) != JSON_PARSE_OK)
+        if ((ret = parse_string_raw(c, str)) != JSON_PARSE_OK)
             break;
-        ParseWhitespace(c);
+        parse_whitespace(c);
         if (*c->json != ':') {
             ret = JSON_PARSE_MISS_COLON;
             break;
         }
         c->json++;
-        ParseWhitespace(c);
-        if ((ret = ParseValue(n, c)) != JSON_PARSE_OK)
+        parse_whitespace(c);
+        if ((ret = parse_value(n, c)) != JSON_PARSE_OK)
             break;
-        node->PushbackObjectElement(str, n);
-        ParseWhitespace(c);
+        node->pushback_object_element(str, n);
+        parse_whitespace(c);
         if (*c->json == ',') {
             c->json++;
-            ParseWhitespace(c);
+            parse_whitespace(c);
         } else if (*c->json == '}') {
             c->json++;
-            node->SetObject();
+            node->set_object();
             return JSON_PARSE_OK;
         } else {
             ret = JSON_PARSE_MISS_COMMA_OR_CURLY_BRACKET;
             break;
         }
     }
-    for (int i = 0; i < node->GetObjectSize(); i++) {
-        node->GetObjectValue(i)->JsonFree();
+    for (int i = 0; i < node->get_object_size(); i++) {
+        node->get_object_value(i)->json_free();
     }
-    node->JsonFree();
-    n->JsonFree();
+    node->json_free();
+    n->json_free();
     return ret;
 }
 
-static int ParseValue(JsonNode* node, JsonContext* c) {
+static int parse_value(JsonNode* node, JsonContext* c) {
     switch (*(c->json)) {
         case '\0':
             return JSON_PARSE_EXPECT_VALUE;
         case 'n':
-            return ParseNull(node, c);
+            return parse_null(node, c);
         case 't':
-            return ParseTrue(node, c);
+            return parse_true(node, c);
         case 'f':
-            return ParseFalse(node, c);
+            return parse_false(node, c);
         case '\"':
-            return ParseString(node, c);
+            return parse_string(node, c);
         case '[':
-            return ParseArray(node, c);
+            return parse_array(node, c);
         case '{':
-            return ParseObject(node, c);
+            return parse_object(node, c);
         default:
-            return ParseNumber(node, c);
+            return parse_number(node, c);
     }
 }
 
 
-int JsonNode::Parse(const char* json) {
+int JsonNode::json_parse(const char* json) {
     JsonContext c{};
     c.json = json;
-    this->JsonInit();
-    ParseWhitespace(&c);
+    this->json_init();
+    parse_whitespace(&c);
     int ret;
-    if ((ret = ParseValue(this, &c)) == JSON_PARSE_OK) {
-        ParseWhitespace(&c);
+    if ((ret = parse_value(this, &c)) == JSON_PARSE_OK) {
+        parse_whitespace(&c);
         if (*(c.json) != '\0') {
-            this->SetNull();
+            this->set_null();
             ret = JSON_PARSE_NOT_SINGLE_VALUE;
         }
     }
     return ret;
 }
 
-JsonType JsonNode::GetType() const {
+JsonType JsonNode::get_type() const {
     return this->type;
 }
 
-void JsonNode::SetNull() {
-    this->JsonFree();
+void JsonNode::set_null() {
+    this->json_free();
     this->type = JSON_TYPE_NULL;
 }
 
-bool JsonNode::GetBool() const {
+bool JsonNode::get_bool() const {
     assert(this->type == JSON_TYPE_TRUE || this->type == JSON_TYPE_FALSE);
     return this->type == JSON_TYPE_TRUE;
 }
 
-void JsonNode::SetBool(bool b) {
-    this->JsonFree();
+void JsonNode::set_bool(bool b) {
+    this->json_free();
     b ? this->type = JSON_TYPE_TRUE : this->type = JSON_TYPE_FALSE;
 }
 
-
-double JsonNode::GetNumber() const {
+double JsonNode::get_number() const {
     assert(this->type == JSON_TYPE_NUMBER);
     return this->number;
 }
-void JsonNode::SetNumber(double n) {
+void JsonNode::set_number(double n) {
     this->type = JSON_TYPE_NUMBER;
     this->number = n;
 }
 
-void JsonNode::SetString(std::string s) {
+void JsonNode::set_string(std::string s) {
     this->string = s;
     this->type = JSON_TYPE_STRING;
 }
-std::string JsonNode::GetString() const {
+std::string JsonNode::get_string() const {
     assert(this->type == JSON_TYPE_STRING);
     return this->string;
 }
-int JsonNode::GetStringLength() const {
+int JsonNode::get_string_length() const {
     assert(this->type == JSON_TYPE_STRING);
     return this->string.size();
 }
 
-void JsonNode::SetArray() {
+void JsonNode::set_array() {
     this->type = JSON_TYPE_ARRAY;
 }
 
-void JsonNode::SetArray(std::vector<JsonNode*> a) {
+void JsonNode::set_array(std::vector<JsonNode*> a) {
     this->array = a;
     this->type = JSON_TYPE_ARRAY;
 }
 
-int JsonNode::GetArraySize() const {
+int JsonNode::get_array_size() const {
     assert(this->type == JSON_TYPE_ARRAY);
     return this->array.size();
 }
 
-JsonNode* JsonNode::GetArrayIndex(int index) const {
+JsonNode* JsonNode::get_array_index(int index) const {
     assert(this->type == JSON_TYPE_ARRAY);
     if (index < 0 || index >= this->array.size())
         return nullptr;
     return this->array[index];
 }
 
-void JsonNode::EraseArrayElement(int index, int count) {
+void JsonNode::erase_array_element(int index, int count) {
     assert(this->type == JSON_TYPE_ARRAY);
     auto iter_b = this->array.begin();
     int i = 0;
@@ -450,44 +449,44 @@ void JsonNode::EraseArrayElement(int index, int count) {
     this->array.erase(iter_b, iter_e);
 }
 
-void JsonNode::PushbackArrayElement(JsonNode* v) {
+void JsonNode::pushback_array_element(JsonNode* v) {
     assert(this->type == JSON_TYPE_ARRAY);
     this->array.push_back(v);
 }
 
-void JsonNode::PopbackArrayElement() {
+void JsonNode::popback_array_element() {
     assert(this->type == JSON_TYPE_ARRAY);
-    this->array[this->array.size() - 1]->JsonFree();
+    this->array[this->array.size() - 1]->json_free();
     this->array.pop_back();
 }
 
-void JsonNode::InsertArrayElement(JsonNode* v, int index) {
+void JsonNode::insert_array_element(JsonNode* v, int index) {
     assert(this->type == JSON_TYPE_ARRAY);
     this->array.insert(this->array.begin() + index, v);
 }
 
-void JsonNode::ClearArray() {
+void JsonNode::clear_array() {
     assert(this->type == JSON_TYPE_ARRAY);
     for (auto node : this->array)
-        node->JsonFree();
+        node->json_free();
     this->array.clear();
 }
 
-void JsonNode::SetObject() {
+void JsonNode::set_object() {
     this->type = JSON_TYPE_OBJECT;
 }
 
-void JsonNode::SetObject(std::vector<std::pair<std::string, JsonNode*>> o) {
+void JsonNode::set_object(std::vector<std::pair<std::string, JsonNode*>> o) {
     this->object = o;
     this->type = JSON_TYPE_OBJECT;
 }
 
-int JsonNode::GetObjectSize() const {
+int JsonNode::get_object_size() const {
     assert(this->type == JSON_TYPE_OBJECT);
     return this->object.size();
 }
 
-std::string JsonNode::GetObjectKey(int index) const {
+std::string JsonNode::get_object_key(int index) const {
     assert(this->type == JSON_TYPE_OBJECT && index >= 0 && index < this->object.size());
     int i = 0;
     auto iter = this->object.begin();
@@ -495,7 +494,7 @@ std::string JsonNode::GetObjectKey(int index) const {
         iter++;
     return iter->first;
 }
-int JsonNode::GetObjectKeyLength(int index) const {
+int JsonNode::get_object_key_length(int index) const {
     assert(this->type == JSON_TYPE_OBJECT && index >= 0 && index < this->object.size());
     int i = 0;
     auto iter = this->object.begin();
@@ -504,7 +503,7 @@ int JsonNode::GetObjectKeyLength(int index) const {
     return iter->first.size();
 }
 
-JsonNode* JsonNode::GetObjectValue(int index) const {
+JsonNode* JsonNode::get_object_value(int index) const {
     assert(this->type == JSON_TYPE_OBJECT && index >= 0 && index < this->object.size());
     int i = 0;
     auto iter = this->object.begin();
@@ -513,12 +512,12 @@ JsonNode* JsonNode::GetObjectValue(int index) const {
     return iter->second;
 }
 
-void JsonNode::SetObjectValue(std::string key, JsonNode* v) {
+void JsonNode::set_object_value(std::string key, JsonNode* v) {
     assert(this->type == JSON_TYPE_OBJECT);
     auto iter = this->object.begin();
     while (iter != this->object.end()) {
         if (iter->first == key) {
-            iter->second->JsonFree();
+            iter->second->json_free();
             iter->second = v;
             return;
         }
@@ -527,7 +526,7 @@ void JsonNode::SetObjectValue(std::string key, JsonNode* v) {
     this->object.emplace_back(std::pair<std::string, JsonNode*>(key, v));
 }
 
-int JsonNode::FindObjectIndex(const std::string str) const {
+int JsonNode::find_object_index(const std::string str) const {
     int index = 0;
     assert(this->type == JSON_TYPE_OBJECT);
     for (auto iter : this->object) {
@@ -538,7 +537,7 @@ int JsonNode::FindObjectIndex(const std::string str) const {
     return JSON_PARSE_NOT_EXIST_KEY;
 }
 
-JsonNode* JsonNode::FindObjectValue(const std::string str) {
+JsonNode* JsonNode::find_object_value(const std::string str) {
     assert(this->type == JSON_TYPE_OBJECT);
     for (const auto& node : this->object) {
         if (node.first == str)
@@ -547,34 +546,34 @@ JsonNode* JsonNode::FindObjectValue(const std::string str) {
     return nullptr;
 }
 
-void JsonNode::ClearObject() {
+void JsonNode::clear_object() {
     assert(this->type == JSON_TYPE_OBJECT);
-    this->JsonFree();
+    this->json_free();
     this->object.clear();
     this->type = JSON_TYPE_OBJECT;
 }
 
-void JsonNode::RemoveObjectValue(int index) {
+void JsonNode::remove_object_value(int index) {
     assert(this->type == JSON_TYPE_OBJECT);
     auto iter = this->object.begin();
     int i = 0;
     while (i++ < index)
         iter++;
-    iter->second->JsonFree();
+    iter->second->json_free();
     this->object.erase(iter);
 }
 
-void JsonNode::PushbackObjectElement(const std::string& key, JsonNode* v) {
+void JsonNode::pushback_object_element(const std::string& key, JsonNode* v) {
     assert(this->type == JSON_TYPE_OBJECT);
     this->object.emplace_back(std::pair<std::string, JsonNode*>(key, v));
 }
 
 static void JsonStringify_string(const JsonNode* node, std::string& str) {
     static const char hex_digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-    assert(node->GetType() == JSON_TYPE_STRING);
+    assert(node->get_type() == JSON_TYPE_STRING);
     str.push_back('"');
-    for (int i = 0; i < node->GetStringLength(); i++) {
-        char ch = node->GetString()[i];
+    for (int i = 0; i < node->get_string_length(); i++) {
+        char ch = node->get_string()[i];
         switch (ch) {
             case '\"':
                 str += '\\';
@@ -613,19 +612,19 @@ static void JsonStringify_string(const JsonNode* node, std::string& str) {
                     str += hex_digits[ch >> 4];
                     str += hex_digits[ch & 15];
                 } else
-                    str += node->GetString()[i];
+                    str += node->get_string()[i];
         }
     }
     str.push_back('"');
 }
 static void JsonStringify_number(const JsonNode* node, std::string& str) {
     char tmp[32];
-    sprintf(tmp, "%.17g", node->GetNumber());
+    sprintf(tmp, "%.17g", node->get_number());
     str += tmp;
 }
 
 static void JsonStringify_value(const JsonNode* node, std::string& str) {
-    switch (node->GetType()) {
+    switch (node->get_type()) {
         case JSON_TYPE_NULL:
             str += "null";
             break;
@@ -643,35 +642,35 @@ static void JsonStringify_value(const JsonNode* node, std::string& str) {
             break;
         case JSON_TYPE_ARRAY:
             str += '[';
-            for (int i = 0; i < node->GetArraySize(); i++) {
+            for (int i = 0; i < node->get_array_size(); i++) {
                 if (i > 0)
                     str += ',';
-                JsonStringify_value(node->GetArrayIndex(i), str);
+                JsonStringify_value(node->get_array_index(i), str);
             }
             str += ']';
             break;
         case JSON_TYPE_OBJECT:
             str += '{';
-            for (int i = 0; i < node->GetObjectSize(); i++) {
+            for (int i = 0; i < node->get_object_size(); i++) {
                 if (i > 0)
                     str += ',';
                 str += '"';
-                str += node->GetObjectKey(i);
+                str += node->get_object_key(i);
                 str += '"';
                 str += ':';
-                JsonStringify_value(node->GetObjectValue(i), str);
+                JsonStringify_value(node->get_object_value(i), str);
             }
             str += '}';
             break;
     }
 }
-std::string JsonNode::JsonStringify() const {
+std::string JsonNode::json_stringify() const {
     std::string s;
     JsonStringify_value(this, s);
     return s;
 }
 
-int JsonNode::IsEqual(JsonNode* rhs) const {
+int JsonNode::json_is_equal(JsonNode* rhs) const {
     assert(rhs != nullptr);
     if (this->type != rhs->type)
         return 0;
@@ -686,7 +685,7 @@ int JsonNode::IsEqual(JsonNode* rhs) const {
             if (this->array.size() != rhs->array.size())
                 return 0;
             for (int i = 0; i < this->array.size(); i++)
-                if (!this->array[i]->IsEqual(rhs->array[i]))
+                if (!this->array[i]->json_is_equal(rhs->array[i]))
                     return 0;
             return 1;
         case JSON_TYPE_OBJECT:
@@ -694,8 +693,8 @@ int JsonNode::IsEqual(JsonNode* rhs) const {
                 return 0;
             int index;
             for (; iter != this->object.end(); iter++) {
-                index = rhs->FindObjectIndex(iter->first);
-                if (!iter->second->IsEqual(rhs->object[index].second))
+                index = rhs->find_object_index(iter->first);
+                if (!iter->second->json_is_equal(rhs->object[index].second))
                     return 0;
             }
             return 1;
@@ -704,13 +703,13 @@ int JsonNode::IsEqual(JsonNode* rhs) const {
     }
 }
 
-void JsonNode::Copy(const JsonNode* src) {
+void JsonNode::json_copy(const JsonNode* src) {
     int i;
     assert(src != this);
     auto iter = src->object.begin();
     switch (src->type) {
         case JSON_TYPE_STRING:
-            this->SetString(src->string);
+            this->set_string(src->string);
             break;
         case JSON_TYPE_ARRAY:
             this->type = JSON_TYPE_ARRAY;
@@ -718,7 +717,7 @@ void JsonNode::Copy(const JsonNode* src) {
             for (i = 0; i < src->array.size(); i++) {
                 tmp_array = new JsonNode();
                 memcpy(tmp_array, src->array[i], sizeof(JsonNode));
-                this->PushbackArrayElement(tmp_array);
+                this->pushback_array_element(tmp_array);
             }
             break;
         case JSON_TYPE_OBJECT:
@@ -726,31 +725,31 @@ void JsonNode::Copy(const JsonNode* src) {
             JsonNode* tmp_obj;
             for (; iter != src->object.end(); iter++) {
                 tmp_obj = new JsonNode();
-                tmp_obj->Copy(iter->second);
-                this->PushbackObjectElement(iter->first, tmp_obj);
+                tmp_obj->json_copy(iter->second);
+                this->pushback_object_element(iter->first, tmp_obj);
             }
             break;
         default:
-            this->JsonFree();
+            this->json_free();
             memcpy(this, src, sizeof(JsonNode));
             break;
     }
 }
 
-void JsonNode::Move(JsonNode* src) {
+void JsonNode::json_move(JsonNode* src) {
     assert(src != nullptr && src != this);
-    this->JsonFree();
-    this->Copy(src);
-    src->JsonInit();
+    this->json_free();
+    this->json_copy(src);
+    src->json_init();
 }
 
-void JsonNode::Swap(JsonNode* rhs) {
+void JsonNode::json_swap(JsonNode* rhs) {
     assert(rhs != nullptr);
     if (this != rhs) {
         auto* tmp = new JsonNode();
-        tmp->Move(this);
-        this->Move(rhs);
-        rhs->Move(tmp);
-        tmp->JsonFree();
+        tmp->json_move(this);
+        this->json_move(rhs);
+        rhs->json_move(tmp);
+        tmp->json_free();
     }
 }

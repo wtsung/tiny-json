@@ -41,52 +41,52 @@ public:
     JsonNode& operator=(const JsonNode& n);
     ~JsonNode();
 
-    int Parse(const char* json);
-    JsonType GetType() const;
+    int json_parse(const char* json);
+    JsonType get_type() const;
 
-    void JsonFree();
-    void JsonInit();
+    void json_free();
+    void json_init();
 
-    void SetNull();
-    bool GetBool() const;
-    void SetBool(bool b);
+    void set_null();
+    bool get_bool() const;
+    void set_bool(bool b);
 
-    double GetNumber() const;
-    void SetNumber(double n);
+    double get_number() const;
+    void set_number(double n);
 
-    void SetString(std::string s);
-    std::string GetString() const;
-    int GetStringLength() const;
+    void set_string(std::string s);
+    std::string get_string() const;
+    int get_string_length() const;
 
-    void SetArray();
-    void SetArray(std::vector<JsonNode*> arr);
-    int GetArraySize() const;
-    JsonNode* GetArrayIndex(int index) const;
-    void EraseArrayElement(int index, int count);
-    void ClearArray();
-    void PushbackArrayElement(JsonNode* value);
-    void PopbackArrayElement();
-    void InsertArrayElement(JsonNode* v, int index);
+    void set_array();
+    void set_array(std::vector<JsonNode*> arr);
+    int get_array_size() const;
+    JsonNode* get_array_index(int index) const;
+    void erase_array_element(int index, int count);
+    void clear_array();
+    void pushback_array_element(JsonNode* value);
+    void popback_array_element();
+    void insert_array_element(JsonNode* v, int index);
 
-    void SetObject();
-    void SetObject(std::vector<std::pair<std::string, JsonNode*>> obj);
-    int GetObjectSize() const;
-    std::string GetObjectKey(int index) const;
-    int GetObjectKeyLength(int index) const;
-    JsonNode* GetObjectValue(int index) const;
-    void SetObjectValue(std::string key, JsonNode* v);
-    int FindObjectIndex(std::string str) const;
-    JsonNode* FindObjectValue(std::string str);
-    void ClearObject();
-    void RemoveObjectValue(int index);
-    void PushbackObjectElement(const std::string& key, JsonNode* v);
+    void set_object();
+    void set_object(std::vector<std::pair<std::string, JsonNode*>> obj);
+    int get_object_size() const;
+    std::string get_object_key(int index) const;
+    int get_object_key_length(int index) const;
+    JsonNode* get_object_value(int index) const;
+    void set_object_value(std::string key, JsonNode* v);
+    int find_object_index(std::string str) const;
+    JsonNode* find_object_value(std::string str);
+    void clear_object();
+    void remove_object_value(int index);
+    void pushback_object_element(const std::string& key, JsonNode* v);
 
-    std::string JsonStringify() const;
+    std::string json_stringify() const;
 
-    int IsEqual(JsonNode* rhs) const;
-    void Copy(const JsonNode* src);
-    void Move(JsonNode* src);
-    void Swap(JsonNode* rhs);
+    int json_is_equal(JsonNode* rhs) const;
+    void json_copy(const JsonNode* src);
+    void json_move(JsonNode* src);
+    void json_swap(JsonNode* rhs);
 
 private:
     JsonType type;
