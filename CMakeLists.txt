@@ -17,5 +17,5 @@ link_directories(
 )
 
 
-add_executable(TinyJson-local test.cpp JsonNode.h JsonNode.cpp googletest)
+add_executable(TinyJson-local test.cc tinyjson.h tinyjson.cc googletest)
 target_link_libraries(TinyJson-local gtest)

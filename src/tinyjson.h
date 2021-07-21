@@ -37,8 +37,8 @@ struct JsonContext {
 class JsonNode {
 public:
     JsonNode() = default;
-    JsonNode(const JsonNode& n);
-    JsonNode& operator=(const JsonNode& n);
+    JsonNode(const JsonNode& node);
+    JsonNode& operator=(const JsonNode& node);
     ~JsonNode();
 
     int json_parse(const char* json);
@@ -52,34 +52,34 @@ public:
     void set_bool(bool b);
 
     double get_number() const;
-    void set_number(double n);
+    void set_number(double num);
 
-    void set_string(std::string s);
+    void set_string(const std::string& str);
     std::string get_string() const;
     int get_string_length() const;
 
     void set_array();
-    void set_array(std::vector<JsonNode*> arr);
+    void set_array(const std::vector<JsonNode*>& arr);
     int get_array_size() const;
     JsonNode* get_array_index(int index) const;
     void erase_array_element(int index, int count);
     void clear_array();
-    void pushback_array_element(JsonNode* value);
+    void pushback_array_element(JsonNode* node);
     void popback_array_element();
-    void insert_array_element(JsonNode* v, int index);
+    void insert_array_element(JsonNode* node, int index);
 
     void set_object();
-    void set_object(std::vector<std::pair<std::string, JsonNode*>> obj);
+    void set_object(const std::vector<std::pair<std::string, JsonNode*>>& obj);
     int get_object_size() const;
     std::string get_object_key(int index) const;
     int get_object_key_length(int index) const;
     JsonNode* get_object_value(int index) const;
-    void set_object_value(std::string key, JsonNode* v);
-    int find_object_index(std::string str) const;
-    JsonNode* find_object_value(std::string str);
+    void set_object_value(const std::string& key, JsonNode* node);
+    int find_object_index(const std::string& str) const;
+    JsonNode* find_object_value(const std::string& str);
     void clear_object();
     void remove_object_value(int index);
-    void pushback_object_element(const std::string& key, JsonNode* v);
+    void pushback_object_element(const std::string& key, JsonNode* node);
 
     std::string json_stringify() const;
 
