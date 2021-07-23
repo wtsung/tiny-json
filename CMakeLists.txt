@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(TinyJson-local)
+project(tiny-json)
 
 set(GOOGLETEST_VERSION 1.9.0)
 set(CMAKE_CXX_STANDARD 14)
@@ -17,5 +17,5 @@ link_directories(
 )
 
 
-add_executable(TinyJson-local test.cc tinyjson.h tinyjson.cc googletest)
+add_executable(tiny-json tiny_json_test.cc tiny_json.h tiny_json.cc googletest parser.cc parser.h tiny_json_bench.cc)
 target_link_libraries(TinyJson-local gtest)
