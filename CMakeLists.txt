@@ -18,4 +18,4 @@ link_directories(
 
 
 add_executable(tiny-json tiny_json_test.cc tiny_json.h tiny_json.cc googletest parser.cc parser.h tiny_json_bench.cc)
-target_link_libraries(TinyJson-local gtest)
+target_link_libraries(tiny-json gtest)
